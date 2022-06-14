@@ -1,4 +1,4 @@
-<head>
+﻿<head>
     <title>Bildhelligkeit bei SW- und Farbfotos</title>
 	<meta charset="UTF-8">
 	<script type="text/javascript" src="thefragebogen.js"></script>
@@ -26,6 +26,7 @@
 		var ShowNotAnsweredAlert = false;
 		var PID = 1
 
+		var images_random = new Array(nImages)
 	</script>	
 		
 	<!-- Help Functions -->
@@ -41,12 +42,23 @@
 			}
 			return a;
 		}
+
+		function random(){
+			for (i = 0; i < nImages; i++){
+				images_random[i] = i+1 
+			}
+			console.log(images_random)
+			
+			shuffle(images_random)
+			console.log(images_random)
+
+		}
 		
 		//<!-- save data in CSV -->
 		function exportToCsv(filename, rows) {
 			var processRow = function (row) {
 				var finalVal = '';
-				console.log(rows.length)
+				//console.log(rows.length)
 				for (var j = 0; j < row.length; j++) {
 					var innerValue = row[j] === null ? '' : row[j].toString();
 					if (row[j] instanceof Date) {
@@ -62,7 +74,7 @@
 				return finalVal + '\n';
 			};
 
-			console.log(rows);
+			//console.log(rows);
 			var csvFile = '';
 			for (var i = 0; i < rows.length; i++) {
 				csvFile += processRow(rows[i]);
@@ -197,7 +209,7 @@
 			//<!-- store data of all scales -->
 			for (var i = 0; i < (nConditions*nImages); i++){
 				//console.log([filearray[i]]);
-				LogData[i+1] = DemoData.concat(answers[i].concat([filearray[i]])); // filearray = Bild_ID
+				LogData[i+1] = DemoData.concat(answers[i].concat([images_random[i]])); // filearray = Bild_ID
 			}
 			console.log(LogData)
 
@@ -213,7 +225,7 @@
 				 alert("Nicht alle Fragen wurden beantwortet.");
 				 return
 			}
-			if ((filearray == null) && (checkInput))
+			if ((images_random == null) && (checkInput))
 			{
 				 alert("Es ist keine Datei ausgewählt");
 				 return
@@ -231,9 +243,11 @@
 			$("#ConditionSelectionPanel").show();
 			window.scrollTo(0,0);
 			
-			var file = "img/" + filearray[conditionCounter] + ".jpg";
+			var file = images_random[conditionCounter] +'.jpg';
 			var myImageElement = document.getElementById("img_" + conditionCounter);
-			myImageElement.src = file;
+
+			console.log(file)
+			myImageElement.src = "image/" +  file ;
 			
 		}		
 				
@@ -267,9 +281,11 @@
 				VideoPanel.style.display = "block";
 				window.scrollTo(0,0);
 				
-				var file = "img/" + filearray[conditionCounter] + ".jpg";
-				var myVideoElement = document.getElementById("img_" + conditionCounter);
-				myVideoElement.src = file;
+				var file = images_random[conditionCounter] +'.jpg';
+				var myImageElement = document.getElementById("img_" + conditionCounter);
+
+				console.log(file)
+				myImageElement.src = "image/" +  file;
 
 			}
 			
@@ -367,7 +383,7 @@
 </head>
 
 <!-- <body> -->
-<body style="background-color:#2E4A62" >
+<body style="background-color:#2E4A62" onload="random()">
 	<!-- ######### Study Instructions -->
 	<section class="container" id="Playlist">
 		<div class="panel panel-primary" style="background-color:#fff">
@@ -391,6 +407,7 @@
 					<b>Wilkommen beim Experiment zur visuellen Wahrnehmung beim Mensch und Bildqualität!</b>
 					<p>Vielen Dank für die Teilnahme an diesem Experiment! Bitte nehmen Sie sich die Zeit, die Anleitung vollständig zu lesen.</p>
 					<ul type="square">
+						<li>Bitte nutzen Sie den Browser <b>Google Chrome</b>, denn sonst kann es sein, dass der Test nicht einwandfrei funktioniert.</li>
 						<li>Das Ziel dieser Studie ist es, den Einfluss der Bildhelligkeit auf die Bildqualität anhand von Fragebögen zu bewerten.</li>
 						<li>Während der Studie sehen Sie sich Bilder in 2 verschiedenen Chromatizitäten (Farbe und Schwarzweiß) an.</li>
 					</ul>
@@ -399,9 +416,9 @@
 				<p><b>Vorgehen:</b>
 					<div style="margin-left: 40px, margin-top: 20px">
 						<ul type="square">
-							<li> Beantworten einiger allgemeiner Fragen.</li>
-							<li> Beantworten Sie zu jedem Bild auf einer Skala Ihre subjektive Einschätzung.</li>
-							<li> Am Ende müssen die Antworten heruntergeladen werden.</li>
+							<li> Beantworten Sie einige allgemeine Fragen.</li>
+							<li> Tragen Sie zu jedem Bild auf einer Skala Ihre subjektive Einschätzung ein.</li>
+							<li> Am Ende bitten wir Sie die Antworten herunterzuladen und per Mail an uns zu schicken.</li>
 						</ul>
 					</div>
 				</p>	
@@ -504,12 +521,12 @@
 				<!-- frame color around element (default: white) -->
 				<div class="panel panel-default" style="background-color:#fff">
 					<div class="panel-body">
-						<label>6. Wie würden Sie Ihre Lichtverhältnisse beschreiben?</label>
+						<label>6. Wie würden Sie die Lichtverhältnisse in Ihrem aktuellen Raum beschreiben?</label>
 						<select class="form-control" id="Lightning" name="Lightning" autocomplete="off" required="">
 							<option selected="selected" value="">- bitte wählen -</option>
 							<option value="sunlight">Intensives Sonnenlicht</option>
 							<option value="sunlight without reflexion">normal oder etwas Sonnenlicht ohne Reflexionen </option>
-							<option value="sunlight with reflexion">Etwas Sonnenlicht mit Reflexionen</option>
+							<option value="sunlight with reflexion">normal oder etwas Sonnenlicht mit Reflexionen</option>
 							<option value="dark"> Völlig dunkel</option>
 							<option value="lamp without reflexion">Dunkel mit unnatürlichem Licht (z. B. einer Lampe) ohne Reflexionen</option>
 							<option value="lamp with reflexion">Dunkel mit unnatürlichem Licht (z. B. einer Lampe) mit Reflexionen</option>
@@ -655,7 +672,7 @@
 		
 		for (var n = 1; n <= (nConditions*nImages); n++){
 			for (var m = 0; m < nItems; m++){
-				items[n-1][m] = "Q_" + item_codes[m] + "_" + n;
+				items[n-1][m] = "img_" + item_codes[m] + "_" + n;
 				elements[n-1][m] = item_codes[m] + "_" + n;
 				answers_log[n-1][m] = -1;
 			}
@@ -669,36 +686,36 @@
 		
 		for (var j = 0; j < nImages; j++){		
 			//<!-- Create the Scales -->
-			var GameSectionRoot = document.createElement("SECTION");
-			GameSectionRoot.setAttribute("class", "container");
+			var ImageSectionRoot = document.createElement("SECTION");
+			ImageSectionRoot.setAttribute("class", "container");
 			//<!-- use this style parameter to hide the whole element -->
-			GameSectionRoot.setAttribute("style", "display:none;");
-			GameSectionRoot.setAttribute("id", "image_" + j);
-			document.body.appendChild(GameSectionRoot);		
+			ImageSectionRoot.setAttribute("style", "display:none;");
+			ImageSectionRoot.setAttribute("id", "image_" + j);
+			document.body.appendChild(ImageSectionRoot);		
 			
-			var GameSectionPanel = document.createElement("div");
-			GameSectionPanel.setAttribute("class", "panel panel-primary");
-			GameSectionPanel.setAttribute("style", "margin-bottom:10px");
-			GameSectionRoot.appendChild(GameSectionPanel);
+			var ImageSectionPanel = document.createElement("div");
+			ImageSectionPanel.setAttribute("class", "panel panel-primary");
+			ImageSectionPanel.setAttribute("style", "margin-bottom:10px");
+			ImageSectionRoot.appendChild(ImageSectionPanel);
 			
-			var GameSectionHeader = document.createElement("div");
-			GameSectionHeader.setAttribute("class", "panel-heading");
-			GameSectionPanel.appendChild(GameSectionHeader);
+			var ImageSectionHeader = document.createElement("div");
+			ImageSectionHeader.setAttribute("class", "panel-heading");
+			ImageSectionPanel.appendChild(ImageSectionHeader);
 			var imageIdx = j + 1;
-			GameSectionHeader.innerHTML = "<b>Bild "+ imageIdx + " / " + nImages + "</b>";
+			ImageSectionHeader.innerHTML = "<b>Bild "+ imageIdx + " / " + nImages + "</b>";
 			
-			GameSectionBody  = document.createElement("div");
-			GameSectionBody.setAttribute("class", "panel-body");
-			GameSectionBody.setAttribute("style","background-color: #fff")
-			//<!-- GameSectionBody.setAttribute("style", "margin-bottom:-10px"); -->
-			GameSectionBody.setAttribute("id", "scale_" + j);
-			GameSectionPanel.appendChild(GameSectionBody);
+			ImageSectionBody  = document.createElement("div");
+			ImageSectionBody.setAttribute("class", "panel-body");
+			ImageSectionBody.setAttribute("style","background-color: #fff")
+			//<!-- ImageSectionBody.setAttribute("style", "margin-bottom:-10px"); -->
+			ImageSectionBody.setAttribute("id", "scale_" + j);
+			ImageSectionPanel.appendChild(ImageSectionBody);
 			
 			var ScaleDescriptionRoot = document.createElement("section");
 			ScaleDescriptionRoot.setAttribute("class", "panel-body");
 			ScaleDescriptionRoot.setAttribute("id", "scale_" + j);
 			ScaleDescriptionRoot.setAttribute("style","background-color: #fff")
-			GameSectionBody.appendChild(ScaleDescriptionRoot);
+			ImageSectionBody.appendChild(ScaleDescriptionRoot);
 			
 			var ImageSection = document.createElement("div"); 
 			ImageSection.align = "center";
@@ -719,7 +736,7 @@
 			{				
 				var ConditionPanel = document.createElement("div");
 				ConditionPanel.setAttribute('class', 'panel panel-primary');
-				GameSectionBody.appendChild(ConditionPanel);
+				ImageSectionBody.appendChild(ConditionPanel);
 				
 				var ConditionHeader = document.createElement("div");
 				ConditionHeader.setAttribute("class", "panel-heading");
@@ -846,11 +863,11 @@
 			<div class="panel-heading"><strong>Download und Ende! 🥳 </strong></div>
 			<fieldset>
 				<div class="col-md-12 text-center" style="margin-top:20px">
-					<p>Damit wir die Testdaten auswerten können, müssen Sie fertige Datei über den Downloadbutton heruntergeladen und per <a href= "mailto:l.schoettler@campus.tu-berlin.de">Email</a> zugesendet werden. Vielen Dank!</p> 
+					<p>Damit wir die Testdaten auswerten können, müssen Sie die fertige Datei über den Downloadbutton heruntergeladen und per <a href= "mailto:sonja.schroeder@campus.tu-berlin.de">Email</a> zugesendet werden. Vielen Dank!</p> 
 					<br>
 					
 					<button ID="submitButton" type="button" class="btn btn-info" style="background-color:#578CA9" onclick="storeData();"><b>Antworten herunterladen</b></button>
-					<a href= "mailto:l.schoettler@campus.tu-berlin.de"><button ID="mailButton" type="button" class="btn btn-info" style="background-color:#578CA9">Send Email</button> </a>
+					<a href= "mailto:sonja.schroeder@campus.tu-berlin.de"><button ID="mailButton" type="button" class="btn btn-info" style="background-color:#578CA9">Send Email</button> </a>
 
 				</div>
 			<fieldset>
