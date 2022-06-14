@@ -1,1 +1,859 @@
-Hello World
+<head>
+    <title>Bildhelligkeit bei SW- und Farbfotos</title>
+	<meta charset="UTF-8">
+	<script type="text/javascript" src="thefragebogen.js"></script>
+	<script type="text/javascript" src="query.js"></script>
+	<link href="style.css" rel="stylesheet" type="text/css" media="all">
+	
+	<!-- Questionnaire Settings -->
+	<script type="text/javascript">	
+		//<!-- check if inputs are complete(adjust in case of test restart) -->
+		var checkInput = true;			
+		//<!-- number of different videos -->
+		var nImages = 80;
+		//<!-- Conditions per video (default = 1, do not change) -->
+		var nConditions = 1;
+		//<!-- counter for video file and rating scale -->
+		var conditionCounter = 0;
+		//<!-- default duration for closing full screen -->
+		var fix_duration = false
+
+		var durationarray = new Array(nImages);
+		//<!-- condition array -->
+		var filecontent;
+		var filearray = new Array(nImages);
+		//<!-- completed full video -->
+		var ShowNotAnsweredAlert = false;
+		var PID = 1
+
+	</script>	
+		
+	<!-- Help Functions -->
+	<script type="text/javascript">
+		//<!-- shuffle function for randomization of items -->
+		function shuffle(a) {
+			var j, x, i;
+			for (i = a.length - 1; i > 0; i--) {
+				j = Math.floor(Math.random() * (i + 1));
+				x = a[i];
+				a[i] = a[j];
+				a[j] = x;
+			}
+			return a;
+		}
+		
+		//<!-- save data in CSV -->
+		function exportToCsv(filename, rows) {
+			var processRow = function (row) {
+				var finalVal = '';
+				console.log(rows.length)
+				for (var j = 0; j < row.length; j++) {
+					var innerValue = row[j] === null ? '' : row[j].toString();
+					if (row[j] instanceof Date) {
+						innerValue = row[j].toLocaleString();
+					};
+					var result = innerValue.replace(/"/g, '""');
+					if (result.search(/("|,|\n)/g) >= 0)
+						result = '"' + result + '"';
+					if (j > 0)
+						finalVal += ',';
+					finalVal += result;
+				}
+				return finalVal + '\n';
+			};
+
+			console.log(rows);
+			var csvFile = '';
+			for (var i = 0; i < rows.length; i++) {
+				csvFile += processRow(rows[i]);
+			}
+
+			var blob = new Blob([csvFile], { type: 'text/csv;charset=utf-8;' });
+			if (navigator.msSaveBlob) { // IE 10+
+				navigator.msSaveBlob(blob, filename);
+			} 
+			else {
+				var link = document.createElement("a");
+				if (link.download !== undefined) {
+					var url = URL.createObjectURL(blob);
+					link.setAttribute("href", url);
+					link.setAttribute("download", filename);
+					link.style.visibility = 'hidden';
+					document.body.appendChild(link);
+					link.click();
+					document.body.removeChild(link);
+				}
+			}
+		}
+		
+		//<!-- show experience questionnaire scales / slides -->
+		function showSlides() {
+			var slides = document.getElementsByClassName("mySlides");
+			
+			//<!-- show slide number n according to plusSlides function -->
+			for (var i = 0; i < (nConditions*nImages); i++){
+				slides[slideIndex[i]-1].style.display = "block";  
+				var counter = document.getElementById("newCounter" + i);
+				//counter.innerHTML = slideIndex[i] - i*slides.length/(nConditions*nImages) + " / " + slides.length/(nConditions*nImages);
+			}
+		}
+		
+		//<!-- show scale explanation (training) scales / slides -->
+		function showTrainSlides() {
+			var TrainSlides = document.getElementsByClassName("myTrainSlides");
+
+			//<!-- show slide number n according to plusSlides function -->
+			for (var i = 0; i < (nItems); i++){
+				TrainSlides[TrainSlideIndex - 1].style.display = "block";  
+				var counter = document.getElementById("TrainCounter");
+			}
+		}
+	</script>
+	
+	<!-- Questionnaire Information -->
+	<script type="text/javascript">				
+		var item_codes = ["IQ"];
+	
+		var nItems = item_codes.length;
+		var questions = new Array(nItems);
+		var labels = new Array(nItems);
+		questions[0] = "Wie bewerten Sie die allgemeine Bildqualität?";
+		labels[0] = ["extrem schlecht","sehr schlecht","eher schlecht","unentschieden","eher gut","sehr gut","ideal"];
+
+		//<!-- Post-test questionnaire items -->
+		var PostTestItem_codes = ["IVF","IVU","IVD","ILU","IRD"];
+		shuffle(PostTestItem_codes);
+		PostTestItem_codes = PostTestItem_codes.concat(["Open"]);
+		var nPostTestItems = PostTestItem_codes.length;
+		var PostTestQuestions = new Array(nPostTestItems);
+		var PostTestLabels = new Array(nPostTestItems);
+		PostTestQuestions[PostTestItem_codes.indexOf("IVF")] = "How important is the aspect <b>Video Fragmentation</b> for you?";	
+	</script>
+	
+	<!-- functions to read and store answers -->
+	<script type="text/javascript">
+		function submitButtonState()
+		{					
+			// search for submit button
+			btn = document.getElementById('submitButton');
+
+			if (btn != null)
+			{
+				answered = true;
+				var newEntryIdx = 0;
+				
+				//<!-- check if experience questions are answered -->
+				for (var p = 0; p < nItems; p++){
+					for (var q = 0; q < (nConditions*nImages); q++){
+						if (document.getElementById(items[q][p]) != null)
+							fieldVal = document.getElementById(items[q][p]).value;
+						else
+							fieldVal = -1;
+						answers[q][p] = fieldVal;
+						if (!(fieldVal == answers_log[q][p])){
+							//newEntry = true;
+							newEntryIdx = q;
+						}
+						if (fieldVal == -1 || fieldVal == "")
+							answered = false;
+					}
+				}		
+				
+				//<!-- check if demographic questions are answered -->
+				var DemoData = [PID , Gender.value, ImagePreference.value, MonitorUsed.value,  MonitorBri.value, Lightning.value, visualImpairment.value, talkbox.value];
+				for (var p = 0; p < DemoData.length-1; p++){
+					if (DemoData[p] == "")
+						answered = false;
+				}	
+				
+				//<!-- store the answers in the log for comparison with new answer -->
+				for (var p = 0; p < nItems; p++)
+					for (var q = 0; q < (nConditions*nImages); q++)
+						answers_log[q][p] = answers[q][p];
+						
+				///<!-- if all items are answered, enable the submit button -->
+				btn.disabled = !answered;
+				if (!checkInput){
+					btn.disabled = false;
+				}
+			}
+		}
+				
+		function storeData(){
+			screen_value_width = window.screen.width * window.devicePixelRatio
+			screen_value_height = window.screen.height * window.devicePixelRatio
+			//console.log(screen_value_width)
+			var DemoData = [ PID , Gender.value, ImagePreference.value, MonitorUsed.value, screen_value_width + "x" + screen_value_height , MonitorBri.value, Lightning.value, visualImpairment.value, talkbox.value];
+			var DemoItems = [ "PID", "Gender", "ImagePreference", "MonitorUsed", "MonitorRes", "MonitorBri","Lightning", 'visual' , 'Impairment']
+			
+			//<!-- array for ratings -->
+			var LogData = new Array((nConditions*nImages+1));
+			for (var n = 0; n < (nConditions*nImages+1); n++)
+				LogData[n] = new Array((DemoData.length + nItems));
+				
+			//<!-- item codes as table header -->
+			LogData[0] = DemoItems.concat(item_codes.concat(["File_ID"]));
+			
+			//<!-- store data of all scales -->
+			for (var i = 0; i < (nConditions*nImages); i++){
+				//console.log([filearray[i]]);
+				LogData[i+1] = DemoData.concat(answers[i].concat([filearray[i]])); // filearray = Bild_ID
+			}
+			console.log(LogData)
+
+			var filename = "Image_quality_Results";
+			exportToCsv(filename+'.csv', LogData)
+		}
+		
+		function startTest(){
+			console.log("startTest");
+			DemoData = [PID , Gender.value, ImagePreference.value, MonitorUsed.value, MonitorBri.value, Lightning.value, visualImpairment.value];
+			if ((DemoData.includes("")) && (checkInput))
+			{
+				 alert("Nicht alle Fragen wurden beantwortet.");
+				 return
+			}
+			if ((filearray == null) && (checkInput))
+			{
+				 alert("Es ist keine Datei ausgewählt");
+				 return
+			}
+			document.getElementById("example_tests").style.display = "none";
+			$("#intro").hide();
+			$("#general").hide();;
+			$("#device").hide();
+			$("#motive").hide();
+			$("#StartPanel").hide();
+
+			conditionCounter = 0;
+			var VideoPanel = document.getElementById("image_" + conditionCounter);
+			VideoPanel.style.display = "block";
+			$("#ConditionSelectionPanel").show();
+			window.scrollTo(0,0);
+			
+			var file = "img/" + filearray[conditionCounter] + ".jpg";
+			var myImageElement = document.getElementById("img_" + conditionCounter);
+			myImageElement.src = file;
+			
+		}		
+				
+		function nextCondition(){
+			//console.log("Next Condition - Video Watch: "" - Answer: " + answers[conditionCounter]);			
+			document.getElementById("NotAnsweredAlert").style.display = "none";
+			ShowNotAnsweredAlert = false;
+			for (var p = 0; p < nItems; p++)
+				if (answers[conditionCounter][p] == -1)
+					ShowNotAnsweredAlert = true;
+			if (ShowNotAnsweredAlert && checkInput)
+			{
+				console.log("Not all questions have been answered.");
+				document.getElementById("NotAnsweredAlert").style.display = "block";
+				return
+			}				
+			
+			var VideoPanel = document.getElementById("image_" + conditionCounter);
+			VideoPanel.style.display = "none";
+			conditionCounter++;
+			
+			if (conditionCounter > nImages - 1){
+				var ConditionPanel = document.getElementById("ConditionSelectionPanel");
+				ConditionPanel.style.display = "none";
+				var SubmitPanel = document.getElementById("SubmitPanel");
+				SubmitPanel.style.display = "block";
+				window.scrollTo(0,0);
+			}
+			else{
+				var VideoPanel = document.getElementById("image_" + conditionCounter);
+				VideoPanel.style.display = "block";
+				window.scrollTo(0,0);
+				
+				var file = "img/" + filearray[conditionCounter] + ".jpg";
+				var myVideoElement = document.getElementById("img_" + conditionCounter);
+				myVideoElement.src = file;
+
+			}
+			
+			
+		}
+		
+		function previousCondition(){
+			console.log("previousCondition");
+
+			if (conditionCounter < 1)
+				return
+			var VideoPanel = document.getElementById("image_" + conditionCounter);
+			VideoPanel.style.display = "none";
+			conditionCounter--;
+			var VideoPanel = document.getElementById("image_" + conditionCounter);
+			VideoPanel.style.display = "block";
+			window.scrollTo(0,0);
+		}
+		
+		function openFile(event) {
+			var input = event.target;
+			//console.log(input)
+			var reader = new FileReader();
+			//console.log(reader)
+			reader.onload = function(){
+				var text = reader.result;
+				//console.log(text)
+				var node = document.getElementById('output');
+				node.innerText = text;
+				filecontent = reader.result.substring(0, 50000);
+			};
+			reader.readAsText(input.files[0]);
+			var PlaylistPanel = document.getElementById("Playlist");
+			PlaylistPanel.style.display = "none";
+		};
+	  
+		function readPlaylist() {
+			var Condtitions = filecontent.split("\r\n");
+			var myPID = parseInt(1) - 1;
+			var myConditions = Condtitions[myPID];
+			//<!-- use .map(Number) if integer needed -->
+			conditionarray = myConditions.split("|");
+			var i;
+			var stimulus_info;
+			for (i = 0; i < conditionarray.length; i++)
+			{
+				stimulus_info = conditionarray[i].split("_");
+				filearray[i] = stimulus_info[0];
+				durationarray[i] = stimulus_info[1];
+			}
+		}
+
+		//<!-- check answers every second (started on page load) -->
+		$(function() {
+			setInterval(submitButtonState, 1000);
+		});
+	</script>
+
+	<!-- functions for disable the visual impairment-->
+	<script> 	
+		function agree() { 
+			var eins = 0;
+			console.log(document.getElementById('yes').disabled)
+			if(document.getElementById('talkbox').disabled == true){
+				document.getElementById('talkbox').disabled = false;
+				document.getElementById('yes').disabled = false;
+				document.getElementById('no').disabled = true;
+				eins = 1
+				document.getElementById("visualImpairment").value = 'yes'
+			} 
+			if(eins == 0 ){
+				document.getElementById('talkbox').disabled = true;
+				document.getElementById('no').disabled = false;
+				document.getElementById("visualImpairment").value = ''
+			}
+		} 
+		
+		function disagree() { 
+			console.log(document.getElementById('no'))	
+			var eins = 0;
+			if(document.getElementById('yes').disabled == false ){
+				document.getElementById('talkbox').disabled = true;
+				document.getElementById('yes').disabled = true;
+				eins = 1;
+				document.getElementById("visualImpairment").value = 'no'
+			}
+			if(eins == 0 ){
+				document.getElementById('talkbox').disabled = true;
+				document.getElementById('yes').disabled = false;
+				document.getElementById("visualImpairment").value = ''
+			}
+		} 		
+	</script>
+	
+</head>
+
+<!-- <body> -->
+<body style="background-color:#2E4A62" >
+	<!-- ######### Study Instructions -->
+	<section class="container" id="Playlist">
+		<div class="panel panel-primary" style="background-color:#fff">
+			<div class="panel-heading" style="background-color:#default"><strong>Bedingungsliste</strong></div>
+			<div class="panel-body">
+				<p>
+					<b>Bitte wählen Sie die Datei "ConiditionPlan - Test 1.txt" über die Schaltfläche "Datei auswählen" aus!</b>
+					 <input type='file' accept='text/plain' autocomplete="off" onchange='openFile(event)'>
+					<div id='output' style="display:none;"></div>
+				</p>
+			</div>
+		</div>
+	</section>
+
+	<section class="container" id="intro">
+		<div class="panel panel-primary" style="background-color:#fff">
+			<div class="panel-heading"><strong>Anweisungen</strong></div>
+
+			<div class="panel-body">
+				<p>
+					<b>Wilkommen beim Experiment zur visuellen Wahrnehmung beim Mensch und Bildqualität!</b>
+					<p>Vielen Dank für die Teilnahme an diesem Experiment! Bitte nehmen Sie sich die Zeit, die Anleitung vollständig zu lesen.</p>
+					<ul type="square">
+						<li>Das Ziel dieser Studie ist es, den Einfluss der Bildhelligkeit auf die Bildqualität anhand von Fragebögen zu bewerten.</li>
+						<li>Während der Studie sehen Sie sich Bilder in 2 verschiedenen Chromatizitäten (Farbe und Schwarzweiß) an.</li>
+					</ul>
+				</p>
+
+				<p><b>Vorgehen:</b>
+					<div style="margin-left: 40px, margin-top: 20px">
+						<ul type="square">
+							<li> Beantworten einiger allgemeiner Fragen.</li>
+							<li> Beantworten Sie zu jedem Bild auf einer Skala Ihre subjektive Einschätzung.</li>
+							<li> Am Ende müssen die Antworten heruntergeladen werden.</li>
+						</ul>
+					</div>
+				</p>	
+			</div>
+		</div>
+	</section>
+	<!-- End Study Instructions -->
+
+	
+	<!-- ######### Demographics ######### -->
+	<section class="container" id="general">
+
+		<div class="panel panel-primary" style="background-color:#578CA9">
+			<!-- header of panel text color -->
+			<div class="panel-heading" style="background-color:#default"><b>Allgemeine Fragen</b></div>
+			<!-- Gender -->
+			<fieldset style="background-color:#fff">
+				<div class="panel panel-default" style="background-color:#fff">
+					<div class="panel-body">
+						<label>1. Was ist Ihr Geschlecht?</label>
+						<select onchange=readPlaylist() class="form-control" id="Gender" name="Gender" autocomplete="off" required="">
+							<option selected="selected" value="">- bitte wählen -</option>
+							<option value="female">weiblich</option>
+							<option value="male">männlich</option>
+							<option value="transgender">Transgender</option>
+							<option value="other">Andere</option>
+							<option value="no">keine Angabe</option>
+						</select>
+					</div>
+				</div>
+			</fieldset>
+			<!-- visual Impairment -->
+			<fieldset style="background-color:#fff">
+				<div class="panel panel-default" style="background-color:#fff">
+					<div class="panel-body">
+						<label id= "visualImpairment" value="">2. Leiden Sie an einer Sehschwäche oder einer anderen Beeinträchtigung der visuellen Wahrnehmung?</label><br>
+						<input type="checkbox" id="no" name="no" value="no" onchange="disagree()"> Nein <br>
+						<input type="checkbox" id="yes" name="yes" value="yes" onchange="agree()"> Ja, diese 
+						<input disabled class="form-control" id="talkbox" name="talkbox" autocomplete="off" required="" cols="5" rows="1"></input>
+					</div>
+				</div>
+			</fieldset>
+			<!-- color of field set -->
+			<fieldset style="background-color:#fff">
+				<!-- frame color around element (default: white) -->
+				<div class="panel panel-default" style="background-color:#fff">
+					<div class="panel-body">
+						<label>3. Bevorzugen Sie allgemein Schwarzweiß- oder Farbfotos?</label>
+						<select class="form-control" id="ImagePreference" name="ImagePreference" autocomplete="off" required="">
+							<option selected="selected" value="">- bitte wählen -</option>
+							<option value="mono">Schwarzweiß</option>
+							<option value="poly">Farbfoto</option>
+							<option value="no">Keine Präferenz</option>
+						</select>
+					</div>
+				</div>
+			</fieldset>
+		</div>
+	</section>
+	
+	
+	<section class="container" id="device">
+		<!-- questions about the device and the environment -->
+		<div class="panel panel-primary" style="background-color:#578CA9">
+			<div class="panel-heading" style="background-color:#default"><b>Fragen zu Gerät und Umgebung</b></div>
+			<!-- used Monitor -->
+			<fieldset style="background-color:#fff">
+				<div class="panel panel-default" style="background-color:#fff">
+					<div class="panel-body">
+						<label>4. Welche Art von Monitor verwenden Sie für diese Studie?</label>
+						<select class="form-control" id="MonitorUsed" name="MonitorUsed" autocomplete="off" required="">
+							<option selected="selected" value="">- bitte wählen -</option>
+							<option value="Desktop">Desktop Monitor (&gt; 20&#39;&#39;)</option>
+							<option value="Laptop">Laptop (&gt; 12&#39;&#39;)</option>
+							<option value="Tablet">Tablet (&gt; 8&#39;&#39;)</option>
+							<option value="largePhone">Smartphone (&gt; 5&#39;&#39;)</option>
+							<option value="Other">Andere oder keine Angabe</opetion>
+						</select>
+					</div>
+				</div>
+			</fieldset>
+			<!-- brigthness of screen -->
+			<fieldset style="background-color:#fff">
+				<div class="panel panel-default" style="background-color:#fff">
+					<div class="panel-body">
+						<label>5. Welche Bildschirmhelligkeit ist auf Ihrem Gerät eingestellt?</label>
+						<p style="font-style: italic; font-size: 12pt;">Bitte stellen Sie die Bildschirmhelligkeit auf 100%, dann können Sie die Bildhelligkeit besser beurteilen.</p>
+						<select class="form-control" id="MonitorBri" name="MonitorBri" autocomplete="off" required="">
+							<option selected="selected" value="">- bitte wählen -</option>
+							<option value="100">100 %</option>
+							<option value="&gt; 50">&gt; 50 %</option>
+							<option value="&lt; 50 %"> &lt; 50 %</option>
+							<option value="no">keine Angabe</option>
+						</select>
+					</div>
+				</div>
+			</fieldset>
+			<!-- lighting condition-->
+			<fieldset style="background-color:#fff">
+				<!-- frame color around element (default: white) -->
+				<div class="panel panel-default" style="background-color:#fff">
+					<div class="panel-body">
+						<label>6. Wie würden Sie Ihre Lichtverhältnisse beschreiben?</label>
+						<select class="form-control" id="Lightning" name="Lightning" autocomplete="off" required="">
+							<option selected="selected" value="">- bitte wählen -</option>
+							<option value="sunlight">Intensives Sonnenlicht</option>
+							<option value="sunlight without reflexion">normal oder etwas Sonnenlicht ohne Reflexionen </option>
+							<option value="sunlight with reflexion">Etwas Sonnenlicht mit Reflexionen</option>
+							<option value="dark"> Völlig dunkel</option>
+							<option value="lamp without reflexion">Dunkel mit unnatürlichem Licht (z. B. einer Lampe) ohne Reflexionen</option>
+							<option value="lamp with reflexion">Dunkel mit unnatürlichem Licht (z. B. einer Lampe) mit Reflexionen</option>
+							<option value="Other">Andere oder keine Angabe</option>
+						</select>
+					</div>
+				</div>
+			</fieldset>
+		</div>
+	</section>
+	<!-- ######### End Demographics ######### -->
+	
+	
+	<!-- Questionnaire Instructions -->
+	<section class="container" id="motive">
+		<div class="panel panel-primary" style="background-color:#fff">
+			<div class="panel-heading"><strong>Motivbeispiel</strong></div>
+
+			<div class="panel-body" >
+
+				<ul type="square">	
+					<li> Zu jedem Motiv wird es jeweils 5 Schwarzweiß- und Farbfotos geben. 
+						Diese sind alle in unterschiedlichen Bildhelligkeitsstufen. </li>
+					<li> Es werden insgesamt 80 Bilder vorgeführt, die Bildreihenfolge ist willkührlich angeordnet. </li>
+					<li> Ihnen wird immer nur ein Bild gezeigt.  </li>
+					<li><b> Es gibt kein Bild doppelt. </b></li>
+					<li> Unten sind Beispielbilder mit den verschiedenen vorhandenen Einstellungen aufgeführt. </li>
+				</ul>
+				<div style="margin: 20pt;">
+					<p style="text-decoration: underline; "> <b >Farbfoto</b></p> 
+					<img src="images/1.jpg" alt="1"  style="width:200px">
+					<img src="images/2.jpg" alt="2"  style="width:200px">
+					<img src="images/3.jpg" alt="3"  style="width:200px">
+					<img src="images/4.jpg" alt="4"  style="width:200px">
+					<img src="images/5.jpg" alt="5"  style="width:200px">
+				</div>
+				<div style="margin: 20pt;"> 
+					<p style="text-decoration: underline; "><b>Schwarzweißfoto</b></p>
+					<img src="images/6.jpg" alt="6"  style="width:200px">
+					<img src="images/7.jpg" alt="7"  style="width:200px">
+					<img src="images/8.jpg" alt="8"  style="width:200px">
+					<img src="images/9.jpg" alt="9"  style="width:200px">
+					<img src="images/10.jpg" alt="10"  style="width:200px">
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<section class="container" id="example_tests">
+		<div class="panel panel-primary" style="background-color:#fff">
+			<div class="panel-heading"><strong>Beispiel Bewertung</strong></div>
+			<div class="panel-body" id="trainScale">
+				<ul type="square">		
+					<li>Nachdem Sie sich ein Bild angesehen haben, bitten wir Sie, Ihre Meinung zu der Frage in der Skala abzugeben.</li>
+					<li>Fühlen Sie sich frei, <b>die Extreme zu verwenden</b>. </li>
+					<li>Hier können Sie testen, wie Sie eine Bewertung abgeben. Klicken Sie dafür einfach mit der linken Maustaste auf die Skala.</li>
+					<li> Es können nur die beschrifteten Werte und die dazwischen gelegenen Stufen ausgewählt werden. </li>
+				</ul>
+				<img src="images/8.jpg" alt="8" class="center" style="width:40%; margin-top: 25pt">
+				
+				<!-- script for training scale to explain all items of GEQ -->
+				<script>	
+					TrainSlideIndex = 1;
+					var TrainItems = new Array(nItems);
+					var TrainElements = new Array(nItems);			
+					
+					for (var m = 0; m < nItems; m++){
+						TrainItems[m] = "TI_" + item_codes[m];
+						TrainElements[m] = "TE_" + item_codes[m];
+					}
+									
+					var TrainRoot = document.createElement("div");
+					TrainRoot.setAttribute("class", "slideshow-container2");
+					TrainRoot.setAttribute("id", "TrainCondition");
+					var trainID = document.getElementById("trainScale");
+					trainID.appendChild(TrainRoot);
+					
+					//<!-- Item Counter -->
+					var ItemCounterDIV = document.createElement("div");
+					ItemCounterDIV.setAttribute("class", "numbertext");
+					TrainRoot.appendChild(ItemCounterDIV);	
+					newCounter = document.createElement('div');
+					newCounter.setAttribute("id", "TrainCounter");
+					ItemCounterDIV.appendChild(newCounter)	
+					 						
+					//<!-- Item Loop -->
+					for (let i = 0; i < nItems; i++)
+					{
+						var MainNode = document.createElement("div");
+						MainNode.setAttribute("class", "myTrainSlides");
+						TrainRoot.appendChild(MainNode);			
+						
+						var MyInput = document.createElement("input");
+						MyInput.setAttribute('id', TrainItems[i]);
+						MyInput.setAttribute('name', TrainItems[i]);
+						MyInput.setAttribute('type', 'hidden');
+						MyInput.setAttribute('value', '-1');
+						MainNode.appendChild(MyInput);		
+						
+						//<!-- Read Answer on change -->
+						var MyElementsDiv = document.createElement("div");
+						MyElementsDiv.setAttribute("id", TrainElements[i]);
+						MyElementsDiv.setAttribute("class", "screenContainer");
+						ue = new QuestionnaireItemQuality7pt(undefined, questions[i], true, labels[i]);
+						MyElementsDiv.appendChild(ue.createUI());
+						ue.setEnabled(true);
+						f = function (item) {	
+							myItem = TrainItems[i];
+							myItem = document.getElementById(myItem);
+							myItem.value = item.getAnswer();
+						};
+						ue.setOnReadyStateChangedCallback(f);
+						
+						MainNode.appendChild(MyElementsDiv);		
+					}
+					showTrainSlides()
+				</script>				
+
+				<div class="col-md-12 text-center" style="margin-top:20px">
+					<!-- <button class="btn btn-info" style="width:80px;height:40px" onclick="VDCheck();" type="button">Continue</button> -->
+					<button ID="startButton" type="button" style="background-color:#578CA9" class="btn btn-info" onclick="startTest();"> Starte Test zur Bildqualitätsbewertung  </button>
+				</div>				
+			
+			</div>
+		</div>
+	</section>
+	<!-- End Questionnaire Instructions -->
+	
+	<!-- Create Szene for each image -->
+	<script>			
+		//<!-- create items, elements, and default answer log for experience questionnaire-->
+		var items = new Array((nConditions*nImages));
+		var elements = new Array((nConditions*nImages));
+		var answers = new Array((nConditions*nImages));
+		var answers_log = new Array((nConditions*nImages));
+		
+		for (var n = 0; n < (nConditions*nImages); n++){
+			items[n] = new Array(nItems);
+			elements[n] = new Array(nItems);
+			answers[n] = new Array(nItems);
+			answers_log[n] = new Array(nItems);
+		}
+		
+		for (var n = 1; n <= (nConditions*nImages); n++){
+			for (var m = 0; m < nItems; m++){
+				items[n-1][m] = "Q_" + item_codes[m] + "_" + n;
+				elements[n-1][m] = item_codes[m] + "_" + n;
+				answers_log[n-1][m] = -1;
+			}
+		}
+		
+		//<!-- Slide navigation -->
+		var slideIndex = new Array((nConditions*nImages));
+		for (var i = 0; i < (nConditions*nImages); i++){
+			slideIndex[i] = i*nItems + 1;
+		}
+		
+		for (var j = 0; j < nImages; j++){		
+			//<!-- Create the Scales -->
+			var GameSectionRoot = document.createElement("SECTION");
+			GameSectionRoot.setAttribute("class", "container");
+			//<!-- use this style parameter to hide the whole element -->
+			GameSectionRoot.setAttribute("style", "display:none;");
+			GameSectionRoot.setAttribute("id", "image_" + j);
+			document.body.appendChild(GameSectionRoot);		
+			
+			var GameSectionPanel = document.createElement("div");
+			GameSectionPanel.setAttribute("class", "panel panel-primary");
+			GameSectionPanel.setAttribute("style", "margin-bottom:10px");
+			GameSectionRoot.appendChild(GameSectionPanel);
+			
+			var GameSectionHeader = document.createElement("div");
+			GameSectionHeader.setAttribute("class", "panel-heading");
+			GameSectionPanel.appendChild(GameSectionHeader);
+			var imageIdx = j + 1;
+			GameSectionHeader.innerHTML = "<b>Bild "+ imageIdx + " / " + nImages + "</b>";
+			
+			GameSectionBody  = document.createElement("div");
+			GameSectionBody.setAttribute("class", "panel-body");
+			GameSectionBody.setAttribute("style","background-color: #fff")
+			//<!-- GameSectionBody.setAttribute("style", "margin-bottom:-10px"); -->
+			GameSectionBody.setAttribute("id", "scale_" + j);
+			GameSectionPanel.appendChild(GameSectionBody);
+			
+			var ScaleDescriptionRoot = document.createElement("section");
+			ScaleDescriptionRoot.setAttribute("class", "panel-body");
+			ScaleDescriptionRoot.setAttribute("id", "scale_" + j);
+			ScaleDescriptionRoot.setAttribute("style","background-color: #fff")
+			GameSectionBody.appendChild(ScaleDescriptionRoot);
+			
+			var ImageSection = document.createElement("div"); 
+			ImageSection.align = "center";
+			ScaleDescriptionRoot.appendChild(ImageSection);
+			var ImageScene = document.createElement("ul");
+			ImageScene.type = "square";
+			ImageScene.align = 'center';
+			ImageSection.appendChild(ImageScene);	
+			var ImageElement = document.createElement("img");
+			ImageElement.id = 'img_' + j;
+			ImageElement.width = '750';
+			ImageElement.height = '500';
+			ImageElement.align = 'center';
+			ImageElement.preload = "auto";
+			ImageScene.appendChild(ImageElement);				
+							
+			for (let z = j*nConditions; z < (j+1)*nConditions; z++)
+			{				
+				var ConditionPanel = document.createElement("div");
+				ConditionPanel.setAttribute('class', 'panel panel-primary');
+				GameSectionBody.appendChild(ConditionPanel);
+				
+				var ConditionHeader = document.createElement("div");
+				ConditionHeader.setAttribute("class", "panel-heading");
+				ConditionHeader.setAttribute("align", "center");
+
+				var ConditionIdx = (z % nConditions) + 1;
+				ConditionHeader.innerHTML = "<b>Bitte bewerten Sie die folgenden Punkte, indem Sie unten auf die 7-Punkte-Skala klicken.</b>";
+				ConditionPanel.appendChild(ConditionHeader);
+				
+				var ConditionBody = document.createElement("div");
+				ConditionBody.setAttribute("class", "panel-body");
+				ConditionBody.setAttribute("style","background-color: #fff")
+				ConditionPanel.appendChild(ConditionBody);
+				
+				var ScaleRoot = document.createElement("div");
+				ScaleRoot.setAttribute("class", "slideshow-container");
+				ScaleRoot.setAttribute("style", "margin-bottom:-30px, background-color: #fff");
+				ScaleRoot.setAttribute("id", "Condition" + z);
+				ConditionBody.appendChild(ScaleRoot);
+				
+				//<!-- Item Counter -->
+				var ItemCounterDIV = document.createElement("div");
+				ItemCounterDIV.setAttribute("class", "numbertext");
+				ScaleRoot.appendChild(ItemCounterDIV);	
+				newCounter = document.createElement('div');
+				newCounter.setAttribute("id", "newCounter" + z);
+				ItemCounterDIV.appendChild(newCounter)	
+				 		
+						 				
+				
+				//<!-- Item Loop -->
+				for (let i = 0; i < nItems; i++)
+				{
+					var MainNode = document.createElement("div");
+					MainNode.setAttribute("class", "mySlides");
+					ScaleRoot.appendChild(MainNode);			
+					
+					var MyInput = document.createElement("input");
+					MyInput.setAttribute('id', items[z][i]);
+					MyInput.setAttribute('name', items[z][i]);
+					MyInput.setAttribute('type', 'hidden');
+					MyInput.setAttribute('value', '');
+					MainNode.appendChild(MyInput);		
+					
+					//<!-- Read Answer on change -->
+					var MyElementsDiv = document.createElement("div");
+					MyElementsDiv.setAttribute("id", elements[z][i]);
+					MyElementsDiv.setAttribute("class", "screenContainer");
+
+					ue = new QuestionnaireItemQuality7pt(undefined, questions[i], true, labels[i]);
+					MyElementsDiv.appendChild(ue.createUI());
+					ue.setEnabled(true);
+					f = function (item) {	
+						myItem = items[z][i];
+						myItem = document.getElementById(myItem);
+						myItem.value = item.getAnswer();
+					};
+					ue.setOnReadyStateChangedCallback(f);
+					MainNode.appendChild(MyElementsDiv);		
+				}			
+			}
+		}
+		showSlides();
+	</script>	
+	<!-- End Game-Experience Questionnaire -->
+	
+
+	<section class="container" id="ConditionSelectionPanel" style="display:none;">
+		<div class="panel panel-primary" style="background-color:#fff">
+			<!-- <div class="panel-heading" onclick="storeData();"><b>Submit Answers</b></div> -->
+			<fieldset style="background-color:#fff">
+				<div class="col-md-12 text-center" style="background-color:#fff; margin-bottom:-30px">
+					<div class="btn-group" style="margin-left:0px; width:100%">
+						<button ID="PreviousButton" type="button" class="btn btn-info" style="background-color:#578CA9; width:25%" onclick="previousCondition();">Vorheriges</button>
+						<button ID="BackupButton" type="button" class="btn btn-info" style="background-color:#578CA9; width:25%" onclick="storeData();">Download</button>
+						<button ID="InfoButton" type="button" class="btn btn-info" style="background-color:#578CA9; width:25%">Information</button>
+						<button ID="NextButton" type="button" class="btn btn-info" style="background-color:#578CA9; width:25%" onclick="nextCondition();">Nächstes</button>
+						
+						<!-- The Modal -->
+						<div id="Modal" class="modal">
+							<div class="modal-content">
+							<span class="close">&times;</span>
+							<p>
+								<p style="border-bottom: solid ;  margin-bottom: 20pt; padding-bottom: 5pt;"> <b >Informationen</b></p>
+								<ul type="square" style="text-align: left;">
+									<li> Jedes Bild nur einmal vorhanden, aber in unterschiedlichen Helligkeitsstufen.</li>
+									<li> Der Kontrast und die Farben sind <b>nicht</b> zu bewerten.</li>
+									<li> Es können auch die Werte zwischen den Beschriftungen ausgewählt werden. </li>
+									<li> Fühlen Sie sich frei, <b>die Extreme zu verwenden</b>. </li>
+								</ul> 
+							</p>
+							</div>
+						</div>
+					</div>
+					<br>
+					<script>
+						var modal = document.getElementById("Modal");
+						var btn = document.getElementById("InfoButton");
+						var span = document.getElementsByClassName("close")[0];
+						btn.onclick = function() {
+						  modal.style.display = "block";
+						}
+						// When the user clicks on <span> (x), close the modal
+						span.onclick = function() {
+						  modal.style.display = "none";
+						}
+						window.onclick = function(event) {
+						  if (event.target == modal) {
+							modal.style.display = "none";
+						  }
+						}
+						</script>
+					<div class="alert alert-warning" id="NotAnsweredAlert" role="alert" style="display:none; margin-top: 30px">
+						Sie haben keine Qualitätsbewertung abgegeben.
+					</div>
+				</div>
+			<fieldset>
+		</div>
+	</section>
+	
+
+	<section class="container" id="SubmitPanel" style="display:none;">
+		<div class="panel panel-primary" style="background-color:#fff">
+			<div class="panel-heading"><strong>Download und Ende! 🥳 </strong></div>
+			<fieldset>
+				<div class="col-md-12 text-center" style="margin-top:20px">
+					<p>Damit wir die Testdaten auswerten können, müssen Sie fertige Datei über den Downloadbutton heruntergeladen und per <a href= "mailto:l.schoettler@campus.tu-berlin.de">Email</a> zugesendet werden. Vielen Dank!</p> 
+					<br>
+					
+					<button ID="submitButton" type="button" class="btn btn-info" style="background-color:#578CA9" onclick="storeData();"><b>Antworten herunterladen</b></button>
+					<a href= "mailto:l.schoettler@campus.tu-berlin.de"><button ID="mailButton" type="button" class="btn btn-info" style="background-color:#578CA9">Send Email</button> </a>
+
+				</div>
+			<fieldset>
+		</div>
+	</section>
+</body>
