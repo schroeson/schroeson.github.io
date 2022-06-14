@@ -10,7 +10,7 @@
 		//<!-- check if inputs are complete(adjust in case of test restart) -->
 		var checkInput = true;			
 		//<!-- number of different videos -->
-		var nImages = 80;
+		var nImages = 3;
 		//<!-- Conditions per video (default = 1, do not change) -->
 		var nConditions = 1;
 		//<!-- counter for video file and rating scale -->
@@ -56,28 +56,33 @@
 		
 		//<!-- save data in CSV -->
 		function exportToCsv(filename, rows) {
-			var processRow = function (row) {
+			function processRow(row) {
 				var finalVal = '';
+				//console.log(row)
+				//console.log(Date)
 				//console.log(rows.length)
 				for (var j = 0; j < row.length; j++) {
 					var innerValue = row[j] === null ? '' : row[j].toString();
+					//console.log(innerValue)
+					
 					if (row[j] instanceof Date) {
 						innerValue = row[j].toLocaleString();
 					};
 					var result = innerValue.replace(/"/g, '""');
-					if (result.search(/("|,|\n)/g) >= 0)
-						result = '"' + result + '"';
+					//if (result.search(/("|,|\n)/g) >= 0)
+					//	result = '"' + result + '"';
 					if (j > 0)
 						finalVal += ',';
 					finalVal += result;
 				}
+				console.log(finalVal)
 				return finalVal + '\n';
 			};
 
 			//console.log(rows);
 			var csvFile = '';
-			for (var i = 0; i < rows.length; i++) {
-				csvFile += processRow(rows[i]);
+			for (var i = 0; i < nImages+1; i++) {
+				csvFile = csvFile + processRow(rows[i]);
 			}
 
 			var blob = new Blob([csvFile], { type: 'text/csv;charset=utf-8;' });
@@ -214,7 +219,7 @@
 			console.log(LogData)
 
 			var filename = "Image_quality_Results";
-			exportToCsv(filename+'.csv', LogData)
+			exportToCsv(filename +'.csv', LogData)
 		}
 		
 		function startTest(){
@@ -304,39 +309,6 @@
 			VideoPanel.style.display = "block";
 			window.scrollTo(0,0);
 		}
-		
-		function openFile(event) {
-			var input = event.target;
-			//console.log(input)
-			var reader = new FileReader();
-			//console.log(reader)
-			reader.onload = function(){
-				var text = reader.result;
-				//console.log(text)
-				var node = document.getElementById('output');
-				node.innerText = text;
-				filecontent = reader.result.substring(0, 50000);
-			};
-			reader.readAsText(input.files[0]);
-			var PlaylistPanel = document.getElementById("Playlist");
-			PlaylistPanel.style.display = "none";
-		};
-	  
-		function readPlaylist() {
-			var Condtitions = filecontent.split("\r\n");
-			var myPID = parseInt(1) - 1;
-			var myConditions = Condtitions[myPID];
-			//<!-- use .map(Number) if integer needed -->
-			conditionarray = myConditions.split("|");
-			var i;
-			var stimulus_info;
-			for (i = 0; i < conditionarray.length; i++)
-			{
-				stimulus_info = conditionarray[i].split("_");
-				filearray[i] = stimulus_info[0];
-				durationarray[i] = stimulus_info[1];
-			}
-		}
 
 		//<!-- check answers every second (started on page load) -->
 		$(function() {
@@ -384,19 +356,6 @@
 
 <!-- <body> -->
 <body style="background-color:#2E4A62" onload="random()">
-	<!-- ######### Study Instructions -->
-	<section class="container" id="Playlist">
-		<div class="panel panel-primary" style="background-color:#fff">
-			<div class="panel-heading" style="background-color:#default"><strong>Bedingungsliste</strong></div>
-			<div class="panel-body">
-				<p>
-					<b>Bitte wählen Sie die Datei "ConiditionPlan - Test 1.txt" über die Schaltfläche "Datei auswählen" aus!</b>
-					 <input type='file' accept='text/plain' autocomplete="off" onchange='openFile(event)'>
-					<div id='output' style="display:none;"></div>
-				</p>
-			</div>
-		</div>
-	</section>
 
 	<section class="container" id="intro">
 		<div class="panel panel-primary" style="background-color:#fff">
@@ -439,7 +398,7 @@
 				<div class="panel panel-default" style="background-color:#fff">
 					<div class="panel-body">
 						<label>1. Was ist Ihr Geschlecht?</label>
-						<select onchange=readPlaylist() class="form-control" id="Gender" name="Gender" autocomplete="off" required="">
+						<select class="form-control" id="Gender" name="Gender" autocomplete="off" required="">
 							<option selected="selected" value="">- bitte wählen -</option>
 							<option value="female">weiblich</option>
 							<option value="male">männlich</option>
