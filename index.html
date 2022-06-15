@@ -144,7 +144,7 @@
 		var nPostTestItems = PostTestItem_codes.length;
 		var PostTestQuestions = new Array(nPostTestItems);
 		var PostTestLabels = new Array(nPostTestItems);
-		PostTestQuestions[PostTestItem_codes.indexOf("IVF")] = "How important is the aspect <b>Video Fragmentation</b> for you?";	
+		PostTestQuestions[PostTestItem_codes.indexOf("IVF")] = "How important is the aspect?";	
 	</script>
 	
 	<!-- functions to read and store answers -->
@@ -224,6 +224,7 @@
 		
 		function startTest(){
 			console.log("startTest");
+			
 			DemoData = [PID , Gender.value, ImagePreference.value, MonitorUsed.value, MonitorBri.value, Lightning.value, visualImpairment.value];
 			if ((DemoData.includes("")) && (checkInput))
 			{
@@ -243,22 +244,24 @@
 			$("#StartPanel").hide();
 
 			conditionCounter = 0;
-			var VideoPanel = document.getElementById("image_" + conditionCounter);
-			VideoPanel.style.display = "block";
+			var ImagePanel = document.getElementById("image_" + conditionCounter);
+			ImagePanel.style.display = "block";
 			$("#ConditionSelectionPanel").show();
 			window.scrollTo(0,0);
 			
 			var file = images_random[conditionCounter] +'.jpg';
 			var myImageElement = document.getElementById("img_" + conditionCounter);
 
-			console.log(file)
+			//console.log(file)
 			myImageElement.src = "image/" +  file ;
 			
 		}		
 				
 		function nextCondition(){
-			//console.log("Next Condition - Video Watch: "" - Answer: " + answers[conditionCounter]);			
+			console.log( " answers[conditionCounter]: " + answers[conditionCounter]);			
+			
 			document.getElementById("NotAnsweredAlert").style.display = "none";
+			//console.log(checkInput)
 			ShowNotAnsweredAlert = false;
 			for (var p = 0; p < nItems; p++)
 				if (answers[conditionCounter][p] == -1)
@@ -268,10 +271,15 @@
 				console.log("Not all questions have been answered.");
 				document.getElementById("NotAnsweredAlert").style.display = "block";
 				return
-			}				
+			}
+			if(answers[conditionCounter] == ""){ 
+				//console.log('nice')
+				alert("Sie haben keine Qualitätsbewertung abgegeben.");
+    			return;
+			}			
 			
-			var VideoPanel = document.getElementById("image_" + conditionCounter);
-			VideoPanel.style.display = "none";
+			var ImagePanel = document.getElementById("image_" + conditionCounter);
+			ImagePanel.style.display = "none";
 			conditionCounter++;
 			
 			if (conditionCounter > nImages - 1){
@@ -282,8 +290,8 @@
 				window.scrollTo(0,0);
 			}
 			else{
-				var VideoPanel = document.getElementById("image_" + conditionCounter);
-				VideoPanel.style.display = "block";
+				var ImagePanel = document.getElementById("image_" + conditionCounter);
+				ImagePanel.style.display = "block";
 				window.scrollTo(0,0);
 				
 				var file = images_random[conditionCounter] +'.jpg';
@@ -302,11 +310,11 @@
 
 			if (conditionCounter < 1)
 				return
-			var VideoPanel = document.getElementById("image_" + conditionCounter);
-			VideoPanel.style.display = "none";
+			var ImagePanel = document.getElementById("image_" + conditionCounter);
+			ImagePanel.style.display = "none";
 			conditionCounter--;
-			var VideoPanel = document.getElementById("image_" + conditionCounter);
-			VideoPanel.style.display = "block";
+			var ImagePanel = document.getElementById("image_" + conditionCounter);
+			ImagePanel.style.display = "block";
 			window.scrollTo(0,0);
 		}
 
@@ -320,7 +328,7 @@
 	<script> 	
 		function agree() { 
 			var eins = 0;
-			console.log(document.getElementById('yes').disabled)
+			//console.log(document.getElementById('yes').disabled)
 			if(document.getElementById('talkbox').disabled == true){
 				document.getElementById('talkbox').disabled = false;
 				document.getElementById('yes').disabled = false;
@@ -336,7 +344,7 @@
 		} 
 		
 		function disagree() { 
-			console.log(document.getElementById('no'))	
+			//console.log(document.getElementById('no'))	
 			var eins = 0;
 			if(document.getElementById('yes').disabled == false ){
 				document.getElementById('talkbox').disabled = true;
