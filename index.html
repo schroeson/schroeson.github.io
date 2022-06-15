@@ -47,7 +47,7 @@
 			for (i = 0; i < nImages; i++){
 				images_random[i] = i+1 
 			}
-			console.log(images_random)
+			//console.log(images_random)
 			
 			shuffle(images_random)
 			console.log(images_random)
@@ -363,10 +363,10 @@
 
 			<div class="panel-body">
 				<p>
-					<b>Wilkommen beim Experiment zur visuellen Wahrnehmung beim Mensch und Bildqualität!</b>
+					<b>Wilkommen beim Experiment zur visuellen Wahrnehmung beim Menschen und Bildqualität!</b>
 					<p>Vielen Dank für die Teilnahme an diesem Experiment! Bitte nehmen Sie sich die Zeit, die Anleitung vollständig zu lesen.</p>
 					<ul type="square">
-						<li>Bitte nutzen Sie den Browser <b>Google Chrome</b>, denn sonst kann es sein, dass der Test nicht einwandfrei funktioniert.</li>
+						<li>Bitte nutzen Sie den Browser <b>Google Chrome</b>, denn sonst kann es zu Fehlern bei der Anzeige von Skala oder Bildern kommen.</li>
 						<li>Das Ziel dieser Studie ist es, den Einfluss der Bildhelligkeit auf die Bildqualität anhand von Fragebögen zu bewerten.</li>
 						<li>Während der Studie sehen Sie sich Bilder in 2 verschiedenen Chromatizitäten (Farbe und Schwarzweiß) an.</li>
 					</ul>
@@ -539,7 +539,7 @@
 			<div class="panel-heading"><strong>Beispiel Bewertung</strong></div>
 			<div class="panel-body" id="trainScale">
 				<ul type="square">		
-					<li>Nachdem Sie sich ein Bild angesehen haben, bitten wir Sie, Ihre Meinung zu der Frage in der Skala abzugeben.</li>
+					<li>Nachdem Sie sich ein Bild angesehen haben, bitten wir Sie, Ihre Meinung zu der Frage in der Skala anzugeben.</li>
 					<li>Fühlen Sie sich frei, <b>die Extreme zu verwenden</b>. </li>
 					<li>Hier können Sie testen, wie Sie eine Bewertung abgeben. Klicken Sie dafür einfach mit der linken Maustaste auf die Skala.</li>
 					<li> Es können nur die beschrifteten Werte und die dazwischen gelegenen Stufen ausgewählt werden. </li>
@@ -685,8 +685,8 @@
 			ImageSection.appendChild(ImageScene);	
 			var ImageElement = document.createElement("img");
 			ImageElement.id = 'img_' + j;
-			ImageElement.width = '750';
-			ImageElement.height = '500';
+			ImageElement.width = '700';
+			ImageElement.height = '450';
 			ImageElement.align = 'center';
 			ImageElement.preload = "auto";
 			ImageScene.appendChild(ImageElement);				
